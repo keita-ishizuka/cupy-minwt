@@ -1,7 +1,6 @@
+import cupy as cp
 import numpy as np
 from cupyx.profiler import benchmark
-
-import cupy as cp
 
 # ReductionKernel can take multiple arguments
 gf2_matmul = cp.ReductionKernel(
@@ -16,11 +15,12 @@ gf2_matmul = cp.ReductionKernel(
 )
 
 if __name__ == "__main__":
-    x = cp.arange(10, dtype=cp.uint32).reshape(10)
+    k = 20
+    x = cp.arange(k, dtype=cp.uint32).reshape(k)
     y = cp.array(
-        [[0, 1, 0, 1, 0, 0, 0, 0, 0, 0], [0, 1, 0, 1, 1, 0, 0, 0, 0, 0]],
+        [[1 if j >> i & 1 else 0 for i in range(k)] for j in range(1 << k)],
         dtype=cp.uint32,
-    ).reshape(2, 10)
+    ).reshape(1 << k, k)
     # keepdims=True: 行列のdimを保つ（2次元の行列をreduceしたら１次元になるが、
     # それを２次元のまま表示したい場合はTrueにする）
     # axis=0: colごとにreduce
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     z = gf2_matmul(x, y, axis=1, keepdims=False)
     print(x)
     print(y)
-    print(z)
+    print(z[50:70])
     print(
         benchmark(
             gf2_matmul,
